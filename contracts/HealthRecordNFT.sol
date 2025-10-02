@@ -5,8 +5,12 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "./Verifier.sol";
+
 
 contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+    
+    Groth16Verifier public verifier;
     uint256 private _tokenIdCounter;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -20,13 +24,14 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
     event AccessGranted(uint256 indexed tokenId, address indexed grantee);
     event AccessRevoked(uint256 indexed tokenId, address indexed grantee);
 
-    function initialize(address admin) public initializer {
+    function initialize(address admin, address verifierAddress) public initializer {
         __ERC721_init("HealthRecord", "HREC");
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(UPGRADER_ROLE, admin);
+        verifier = Groth16Verifier(verifierAddress);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
@@ -67,5 +72,25 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
     function hasAccess(uint256 tokenId, address user) internal view returns (bool) {
         if (ownerOf(tokenId) == user) return true;
         return _access[tokenId][user];
+    }
+
+    // Funzione di verifica proof ZKP per accedere alla cartella
+    function accessWithProof(
+        uint256 tokenId,
+        uint256[2] calldata a,
+        uint256[2][2] calldata b,
+        uint256[2] calldata c,
+        uint256[1] calldata publicInputs
+    ) external {
+        // Controlla se l’utente ha già accesso
+        require(!hasAccess(tokenId, msg.sender), "Already has access");
+
+        // Verifica la proof tramite il Verifier
+        bool valid = verifier.verifyProof(a, b, c, publicInputs);
+        require(valid, "Invalid proof");
+
+        // Concede accesso all’utente
+        _access[tokenId][msg.sender] = true;
+        emit AccessGranted(tokenId, msg.sender);
     }
 }

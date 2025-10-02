@@ -15,21 +15,24 @@ async function main() {
   // In questo caso, usiamo lo stesso deployer.
   const adminAddress = deployerAddress;
   
-  // 1. Factory per l'Implementation Contract
-  // Nota: `getContractFactory` viene utilizzato con `upgrades.deployProxy`.
+  // 1. Deploy del contratto Verifier
+  const VerifierFactory = await ethers.getContractFactory("Groth16Verifier");
+  const verifier = await VerifierFactory.deploy();
+  await verifier.waitForDeployment();
+  const verifierAddress = await verifier.getAddress();
+  console.log(`Verifier (Groth16Verifier) deployato all'indirizzo: ${verifierAddress}`);
+
+  // 2. Factory per l'Implementation Contract
   const HealthRecordNFTFactory = await ethers.getContractFactory("HealthRecordNFT");
 
-  // 2. Deployment del Proxy e dell'Implementation Contract
-  // `deployProxy` gestisce:
-  //   a) Il deployment del contratto di implementazione (logica).
-  //   b) Il deployment del contratto Proxy (stato).
-  //   c) La chiamata a `initialize(adminAddress)` sul proxy.
+  // 3. Deployment del Proxy e dell'Implementation Contract
+  // Passa adminAddress e verifierAddress alla funzione initialize
   const healthRecordNFTProxy = await upgrades.deployProxy(
     HealthRecordNFTFactory, 
-    [adminAddress], // Argomenti per la funzione initialize(address admin)
+    [adminAddress, verifierAddress], // Argomenti per la funzione initialize(address admin, address verifier)
     { 
-      kind: 'uups', // Specifica che il tipo di proxy è UUPS
-      initializer: 'initialize' // Specifica il nome della funzione di inizializzazione
+      kind: 'uups',
+      initializer: 'initialize'
     }
   );
 

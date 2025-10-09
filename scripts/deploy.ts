@@ -1,9 +1,11 @@
 // scripts/deploy.ts
 
 import { ethers, upgrades } from "hardhat";
-import { HealthRecordNFT } from "../typechain-types"; // Assicurati che typechain sia in esecuzione
+import type { HealthRecordNFT } from "../typechain-types/contracts/HealthRecordNFT";
 
 async function main() {
+  // Stampa la lista degli oracoli
+  // ...existing code...
   console.log("Inizio del deployment del contratto HealthRecordNFT (Proxy UUPS)... 🚀");
 
   // Ottiene l'indirizzo che verrà utilizzato per il deployment
@@ -63,14 +65,22 @@ async function main() {
   console.log(`L'indirizzo deployer/admin ha il DEFAULT_ADMIN_ROLE: ${isAdmin}`);
 
   
-  // In questo esempio si assegna l'oracle role allo stesso deployer del contratto
+  // Imposta la chiave privata dell'account 2 come oracolo
+  const oraclePrivateKey = "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
+  const oracleWallet = new ethers.Wallet(oraclePrivateKey, ethers.provider);
+  // Assegna l'ORACLE_ROLE solo all'indirizzo desiderato
+  const oracleAddresses = [
+    "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  ];
   const ORACLE_ROLE = await healthRecordNFT.ORACLE_ROLE();
-  
-  // Nota: solo l'admin (deployer) può assegnare un ruolo.
-  const tx = await healthRecordNFT.grantRole(ORACLE_ROLE, adminAddress);
-  await tx.wait();
-  
-  console.log(`L'ORACLE_ROLE è stato assegnato all'indirizzo: ${adminAddress}`);
+  for (const oracleAddress of oracleAddresses) {
+    const tx = await healthRecordNFT.grantRole(ORACLE_ROLE, oracleAddress);
+    await tx.wait();
+    console.log(`L'ORACLE_ROLE è stato assegnato all'indirizzo: ${oracleAddress}`);
+    const isOracle = await healthRecordNFT.hasRole(ORACLE_ROLE, oracleAddress);
+    console.log(`Indirizzo ${oracleAddress} ha ruolo ORACLE: ${isOracle}`);
+  }
 
 }
 

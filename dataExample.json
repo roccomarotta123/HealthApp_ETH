@@ -1,0 +1,19 @@
+{
+  "patientId": "1234567890",
+  "name": "Mario Rossi",
+  "dob": "1980-01-01",
+  "records": [
+    {
+      "date": "2025-10-04",
+      "type": "Visita specialistica",
+      "description": "Controllo cardiologico annuale",
+      "doctor": "Dr. Bianchi"
+    },
+    {
+      "date": "2025-09-15",
+      "type": "Analisi del sangue",
+      "description": "Emocromo completo",
+      "doctor": "Dr. Verdi"
+    }
+  ]
+}

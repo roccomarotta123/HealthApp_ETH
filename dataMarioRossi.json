@@ -1,0 +1,19 @@
+{
+  "patientId": "1234567890",
+  "name": "Mario Rossi",
+  "dob": "1980-01-01",
+  "records": [
+    {
+      "date": "2025-10-06",
+      "type": "Radiografia toracica",
+      "description": "Radiografia di controllo post-operatorio",
+      "doctor": "Dr.ssa Neri"
+    },
+    {
+      "date": "2025-08-20",
+      "type": "Visita di controllo",
+      "description": "Follow-up dopo intervento chirurgico",
+      "doctor": "Dr. Bianchi"
+    }
+  ]
+}

@@ -9,13 +9,24 @@ import "./Verifier.sol";
 
 
 contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgradeable, UUPSUpgradeable {
-    
+    // Modificatore per permettere solo al proprietario dell'indirizzo di chiamare la funzione
+    modifier onlyOwner(address owner) {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+     
     Groth16Verifier public verifier;
     uint256 private _tokenIdCounter;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
 
+     // Mapping per tracciare i token posseduti da ogni utente
+    mapping(address => uint256[]) private _ownedTokens;
+    // Nuova mappatura diretta CID -> tokenId
+    mapping(string => uint256) private _cidToTokenId;
+
+    // Mappature per memorizzare i metadati e gli ID dei pazienti
     mapping(uint256 => string) private _metadataCID;
     mapping(uint256 => string) private _patientId;
     mapping(uint256 => mapping(address => bool)) private _access;
@@ -47,14 +58,39 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
         _safeMint(to, tokenId);
         _metadataCID[tokenId] = metadataCID;
         _patientId[tokenId] = patientId;
+        _ownedTokens[to].push(tokenId);
+        _cidToTokenId[metadataCID] = tokenId;
+    
 
         emit MintedRecord(tokenId, to, metadataCID, patientId);
         return tokenId;
+    }
+    // Funzione per ottenere tutti i metadataCID di un owner
+    function getAllMetadataCID(address owner) external view onlyOwner(owner) returns (string[] memory) {
+        uint256[] storage tokens = _ownedTokens[owner];
+        string[] memory cids = new string[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            cids[i] = _metadataCID[tokens[i]];
+        }
+        return cids;
     }
 
     function tokenMetadataCID(uint256 tokenId) external view returns (string memory) {
         require(hasAccess(tokenId, msg.sender));
         return _metadataCID[tokenId];
+    }
+
+    // Funzione di sola lettura: dato un CID restituisce il tokenId associato
+    function getTokenIdByCID(string calldata cid) external view returns (uint256) {
+        uint256 tokenId = _cidToTokenId[cid];
+        require(tokenId != 0, "CID non trovato");
+        return tokenId;
+    }
+
+    
+    // Restituisce tutti i token posseduti da un indirizzo, solo se chiamato dal proprietario
+    function tokensOfOwner(address owner) external view onlyOwner(owner) returns (uint256[] memory) {
+        return _ownedTokens[owner];
     }
  
     function grantAccess(uint256 tokenId, address grantee) external {

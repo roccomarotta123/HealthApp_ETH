@@ -34,6 +34,14 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "circomlib": "^2.0.5"
+    "@helia/json": "^4.0.7",
+    "circomlib": "^2.0.5",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "helia": "^5.5.1",
+    "ipfs-http-client": "^60.0.1",
+    "multer": "^2.0.2",
+    "pinata": "^2.5.1"
   }
 }

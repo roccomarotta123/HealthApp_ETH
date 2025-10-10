@@ -1,6 +1,25 @@
 
-# HealthApp_ETH - Avvio Applicazione Web
+# HealthApp_ETH 
 
+### Tecnologie principali
+- [OpenZeppelin](https://docs.openzeppelin.com/contracts/4.x/) — Librerie per la sicurezza e l’upgrade dei contratti
+- [Hardhat](https://hardhat.org/) — Ambiente di sviluppo e test per smart contract
+- [Pinata](https://www.pinata.cloud/) — Servizio usato per l’archiviazione decentralizzata dei file su IPFS
+- [Zero Knowledge Proofs (zk-SNARK)](https://docs.circom.io/) — Protocolli crittografici per la privacy
+
+### Problema affrontato
+La gestione delle cartelle cliniche digitali in ambito sanitario presenta criticità legate a privacy, sicurezza e trasparenza degli accessi. Il nostro progetto mira a risolvere questi problemi sfruttando la blockchain per:
+
+- Rendere trasparente e verificabile la gestione degli accessi ai dati sanitari
+- Garantire la privacy dei pazienti tramite Zero Knowledge Proofs
+- Offrire un sistema decentralizzato, sicuro e aggiornabile per la conservazione e la condivisione delle cartelle cliniche
+
+Questa soluzione potrebbe essere interessante per pazienti, medici e strutture sanitarie che necessitano di un controllo rigoroso e trasparente sui dati sensibili.
+
+#### Progetti simili
+Un esempio di progetto con obiettivi simili è [Patientory](https://patientory.com/), una piattaforma che utilizza la blockchain per la gestione e la condivisione sicura dei dati sanitari tra pazienti e operatori. Tuttavia, Patientory non integra le Zero Knowledge Proofs e non utilizza NFT per la rappresentazione delle cartelle cliniche.
+
+## Avvio Applicazione Web
 ## Prerequisiti
 - Node.js >= 18
 - npm (o yarn)
@@ -31,6 +50,12 @@ npx hardhat run scripts/deploy.ts --network localhost
 ## 5. Avvia il backend (Express)
 ```bash
 node storage/api.js
+```
+
+## 6. Avvia il frontend (React + Vite)
+```bash
+cd frontend
+npm run dev
 ```
 
 

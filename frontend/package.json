@@ -12,17 +12,24 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "@mui/styled-engine": "^7.3.3",
+    "circomlibjs": "^0.1.7",
     "ethers": "^6.15.0",
+    "poseidon-lite": "^0.3.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.3"
+    "react-router-dom": "^7.9.3",
+    "snarkjs": "^0.7.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/circomlibjs": "^0.1.6",
     "@types/node": "^24.6.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "@types/snarkjs": "^0.7.9",
     "@vitejs/plugin-react": "^5.0.4",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",

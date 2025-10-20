@@ -33,16 +33,14 @@ const Patient: React.FC = () => {
         const contract = new ethers.Contract(CONTRACT_ADDRESS, HealthRecordNFT.abi, signer);
         // Verifica i token posseduti dall'account
         const ownedTokens: string[] = await contract.tokensOfOwner(account);
-        console.log('Token posseduti dall\'account:', ownedTokens);
         // Recupera i CID dal contratto
-  let cids: string[] = await contract.getAllMetadataCID(account);
-  // Filtra i CID duplicati
-  cids = [...new Set(cids)];
+        let cids: string[] = await contract.getAllMetadataCID(account);
+        cids = [...new Set(cids)];
         if (cids.length === 0) {
           setRecords([]);
           setLoading(false);
           return;
-        } 
+        }
         // Recupera i tokenId associati ai CID
         const tokenIds = await Promise.all(
           cids.map(async (cid: string) => {
@@ -61,12 +59,14 @@ const Patient: React.FC = () => {
           body: JSON.stringify({ cids })
         });
         const data = await res.json();
-        console.log('Dati ricevuti dal backend:', data.records);
-        console.log('TokenIds associati:', tokenIds);
         if (!res.ok) throw new Error(data.error || "Errore nel recupero dei record");
         // Associa tokenId a ciascun record
         const recordsWithTokenId = data.records.map((rec: any, idx: number) => ({ ...rec, tokenId: tokenIds[idx] }));
         setRecords(recordsWithTokenId);
+        // Estrai la data di nascita dalla prima cartella clinica e salvala in localStorage
+        if (recordsWithTokenId.length > 0 && recordsWithTokenId[0].dob) {
+          localStorage.setItem('dob', recordsWithTokenId[0].dob);
+        }
       } catch (err: any) {
         setError(err.message || "Errore nel recupero dei record");
       } finally {

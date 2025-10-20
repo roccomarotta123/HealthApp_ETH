@@ -22,15 +22,11 @@ template AgeProof() {
 
     // 2. Logica Range Proof: yearOfBirth <= requiredYear
     // LessThan(N) richiede una dimensione fissa in bit (32 per i numeri interi standard)
-    component check_le = LessThan(32); 
+    component check_le = LessThan(32);
     check_le.in[0] <== yearOfBirth;
-    check_le.in[1] <== requiredYear;
+    check_le.in[1] <== requiredYear + 1; // Aggiungi 1 per includere il limite superiore
     
-    // Il risultato del confronto deve essere 1 (True)
-    check_le.out === 1;
-
-    // OUTPUT PUBBLICO
-    signal output out <== 1;
+    signal output out <== check_le.out;
 }
 
 component main = AgeProof();

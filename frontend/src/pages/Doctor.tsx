@@ -28,7 +28,7 @@ const Doctor: React.FC = () => {
   const [loading, setLoading] = React.useState(false);
   const [dragActive, setDragActive] = React.useState(false);
   const [fileName, setFileName] = React.useState<string | null>(null);
-  const [cartellaClinica, setCartellaClinica] = React.useState<any | null>(null);
+  
   const navigate = useNavigate();
 
   // Funzione per logout
@@ -58,7 +58,6 @@ const Doctor: React.FC = () => {
         try {
           const dati = JSON.parse(text);
           dati.tokenId = result.tokenId;
-          setCartellaClinica(dati);
         } catch {}
       }
       setTo("");
@@ -114,6 +113,9 @@ const Doctor: React.FC = () => {
           </Button>
           <Button variant="contained" color="primary" sx={{ ml: 2 }} onClick={() => navigate("/doctor-records") }>
             Visualizza cartelle cliniche
+          </Button>
+          <Button variant="contained" color="success" sx={{ ml: 2 }} onClick={() => navigate("/request-verification") }>
+            Richiedi verifica
           </Button>
         </Box>
       )}

@@ -35,13 +35,16 @@
   },
   "dependencies": {
     "@helia/json": "^4.0.7",
+    "@mui/icons-material": "^7.3.4",
     "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "helia": "^5.5.1",
     "ipfs-http-client": "^60.0.1",
     "multer": "^2.0.2",
-    "pinata": "^2.5.1"
+    "pinata": "^2.5.1",
+    "snarkjs": "^0.7.5"
   }
 }

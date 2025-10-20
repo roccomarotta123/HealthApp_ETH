@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
@@ -34,6 +35,10 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
     event MintedRecord(uint256 indexed tokenId, address indexed owner, string metadataCID, string patientId);
     event AccessGranted(uint256 indexed tokenId, address indexed grantee);
     event AccessRevoked(uint256 indexed tokenId, address indexed grantee);
+    // Evento per comunicare l'esito della verifica ZKP
+    event AgeVerificationResult(address indexed doctor, address indexed user, uint256 requiredYear, uint256 result);
+     // Evento per richiesta verifica età da parte del medico
+    event AgeVerificationRequested(address indexed patient, address indexed doctor, uint256 requiredYear);
 
     function initialize(address admin, address verifierAddress) public initializer {
         __ERC721_init("HealthRecord", "HREC");
@@ -110,23 +115,27 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
         return _access[tokenId][user];
     }
 
-    // Funzione di verifica proof ZKP per accedere alla cartella
-    function accessWithProof(
-        uint256 tokenId,
-        uint256[2] calldata a,
-        uint256[2][2] calldata b,
-        uint256[2] calldata c,
-        uint256[1] calldata publicInputs
-    ) external {
-        // Controlla se l’utente ha già accesso
-        require(!hasAccess(tokenId, msg.sender), "Already has access");
+   
 
+    // Funzione per il medico per richiedere verifica età
+    function requestAgeVerification(address patient, uint256 requiredYear) external {
+        // Puoi aggiungere controlli (es. solo medico abilitato)
+        emit AgeVerificationRequested(patient, msg.sender, requiredYear);
+    }
+
+    // Funzione di verifica proof ZKP: comunica solo l'esito, non concede/revoca accesso
+    function accessWithProof(
+    uint256[2] calldata a,
+    uint256[2][2] calldata b,
+    uint256[2] calldata c,
+    uint256[1] calldata publicInputs,
+    address doctor,
+    uint256 requiredYear
+    ) external {
         // Verifica la proof tramite il Verifier
         bool valid = verifier.verifyProof(a, b, c, publicInputs);
-        require(valid, "Invalid proof");
-
-        // Concede accesso all’utente
-        _access[tokenId][msg.sender] = true;
-        emit AccessGranted(tokenId, msg.sender);
+        require(valid, "Invalid proof or public inputs");
+        // Se valida, emetti l'evento con l'esito numerico e l'anno richiesto
+        emit AgeVerificationResult(doctor, msg.sender, requiredYear, publicInputs[0]);
     }
 }

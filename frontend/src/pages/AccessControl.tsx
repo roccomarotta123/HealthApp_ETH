@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Typography, TextField, Button, Alert, MenuItem, Select, InputLabel, FormControl, IconButton, Badge, Menu, ListItem, ListItemText, Dialog, DialogTitle, DialogContent } from "@mui/material";
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { ethers } from "ethers";
-import { poseidon2 } from 'poseidon-lite';
+import { poseidon4 } from 'poseidon-lite';
 import * as snarkjs from 'snarkjs';
 import HealthRecordNFT from "../abi/HealthRecordNFT.json";
 import { useWallet } from "../context/WalletContext";
@@ -46,7 +46,7 @@ const AccessControl: React.FC = () => {
       // Popola notifiche solo per richieste non ancora completate
       const newNotifications = eventsRequested.map((ev, idx) => {
         if (!('args' in ev) || !ev.args) return null;
-        const { doctor, requiredYear } = ev.args;
+        const { doctor, requiredYear, requiredMonth, requiredDay } = ev.args;
         const doctorShort = typeof doctor === 'string' ? `${doctor.slice(0, 6)}...${doctor.slice(-4)}` : doctor;
         // Se esiste già un risultato per questa richiesta, non mostrare la notifica
         const isCompleted = completed.some(r => r && r.doctor === doctor.toLowerCase() && r.user === account.toLowerCase() && r.anno === requiredYear.toString());
@@ -56,6 +56,8 @@ const AccessControl: React.FC = () => {
           type: "verifica_eta",
           message: `Richiesta verifica età da ${doctorShort}`,
           requiredYear: requiredYear.toString(),
+          requiredMonth: requiredMonth?.toString() ?? '',
+          requiredDay: requiredDay?.toString() ?? '',
           doctor: doctor
         };
       }).filter(Boolean);
@@ -149,22 +151,35 @@ const AccessControl: React.FC = () => {
           ) : (
             notifications.map((notif) => (
               <ListItem key={notif.id}>
-                <ListItemText primary={notif.message} secondary={`Anno richiesto: ${notif.requiredYear}`} />
+                <ListItemText primary={notif.message} secondary={`Età richiesta: ${new Date().getUTCFullYear() - Number(notif.requiredYear)}`} />
                 <Button variant="contained" color="primary" size="small" sx={{ ml: 2 }} onClick={async () => {
-                  // Recupera anno di nascita da localStorage
-                  let yearOfBirth = 1990;
+                  // Recupera data di nascita completa da localStorage (formato atteso: YYYY-MM-DD)
+                  let birthYear = 1990, birthMonth = 1, birthDay = 1;
                   const dob = localStorage.getItem('dob');
                   if (dob) {
-                    const year = parseInt(dob.split('-')[0], 10);
-                    if (!isNaN(year)) yearOfBirth = year;
+                    const [year, month, day] = dob.split('-').map(Number);
+                    if (!isNaN(year)) birthYear = year;
+                    if (!isNaN(month)) birthMonth = month;
+                    if (!isNaN(day)) birthDay = day;
                   }
-                  console.log('Anno di nascita usato per la ZKP:', yearOfBirth);
+                  console.log('Data di nascita usata per la ZKP:', birthDay, birthMonth, birthYear);
                   const salt = 123456;      // TODO: recupera/genera salt associato
                   const requiredYear = Number(notif.requiredYear);
+                  const requiredMonth = notif.requiredMonth ? Number(notif.requiredMonth) : 1;
+                  const requiredDay = notif.requiredDay ? Number(notif.requiredDay) : 1;
                   // Calcola commitment con poseidon-lite
-                  const commitment = poseidon2([yearOfBirth, salt]).toString();
-                  // Prepara input
-                  const input = { yearOfBirth, salt, requiredYear, commitment };
+                  const commitment = poseidon4([birthYear, birthMonth, birthDay, salt]).toString();
+                  // Prepara input coerente con il circuito
+                  const input = {
+                    birthYear,
+                    birthMonth,
+                    birthDay,
+                    salt,
+                    limitYear: requiredYear,
+                    limitMonth: requiredMonth,
+                    limitDay: requiredDay,
+                    commitment
+                  };
                   // Usa fullProve per generare witness e proof direttamente
                   const { proof, publicSignals } = await snarkjs.groth16.fullProve(
                     input,
@@ -176,7 +191,6 @@ const AccessControl: React.FC = () => {
                   const provider = new ethers.BrowserProvider(window.ethereum);
                   const signer = await provider.getSigner();
                   const contract = new ethers.Contract(CONTRACT_ADDRESS, HealthRecordNFT.abi, signer);
-                  // Adatta publicSignals per la chiamata (deve essere array di uint256, es: [publicSignals[0]])
                   // Conversione per compatibilità ethers/solidity
                   const toHex = (v: string | number | bigint) => {
                     if (typeof v === 'string' && v.startsWith('0x')) return v;
@@ -196,7 +210,9 @@ const AccessControl: React.FC = () => {
                     c,
                     publicInputs,
                     notif.doctor,
-                    requiredYear
+                    requiredYear,
+                    requiredMonth,
+                    requiredDay
                   );
                   setProofResult({ proof, publicSignals, commitment });
                   setProofOpen(true);

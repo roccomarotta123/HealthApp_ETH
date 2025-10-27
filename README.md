@@ -15,48 +15,10 @@ La gestione delle cartelle cliniche digitali in ambito sanitario presenta critic
 
 Questa soluzione potrebbe essere interessante per pazienti, medici e strutture sanitarie che necessitano di un controllo rigoroso e trasparente sui dati sensibili.
 
-## Smart Contract e Verifica ZKP
-
-Il progetto si basa su due smart contract principali:
-
-### 1. HealthRecordNFT.sol
-Questo contratto rappresenta il cuore della logica applicativa e della gestione degli accessi. Utilizza le librerie OpenZeppelin come riferimento per:
-- **Gestione dei ruoli**: grazie a AccessControlUpgradeable, è possibile assegnare ruoli specifici (medico, paziente, oracolo, admin) agli indirizzi, controllando in modo sicuro chi può eseguire determinate operazioni.
-- **Contract Upgradeable**: tramite UUPSUpgradeable, il contratto può essere aggiornato nel tempo senza perdere i dati già registrati sulla blockchain. Questo permette di correggere bug o aggiungere nuove funzionalità senza dover ridistribuire tutto da zero.
-
-Le principali funzionalità offerte sono:
-- Minting degli NFT che rappresentano le cartelle cliniche
-- Associazione tra NFT, paziente e CID IPFS
-- Gestione delle autorizzazioni granulari: solo chi possiede il ruolo corretto può eseguire determinate azioni (ad esempio, solo il medico può caricare una cartella clinica, solo il paziente può concedere o revocare l’accesso ai propri dati)
-
-
-### 2. Verifier.sol
-Questo contratto viene generato automaticamente tramite i comandi Circom e SnarkJS a partire da un circuito ZKP (Zero Knowledge Proof) scritto in .circom. Il suo scopo è:
-- Verificare on-chain la validità delle prove zk-SNARK fornite dagli utenti (ad esempio, la prova che un paziente è nato prima di un certo anno senza rivelare la data di nascita)
-- Esporre una funzione (ad esempio, verifyProof) che prende in input la proof e i publicInputs e restituisce true/false a seconda della validità della prova rispetto al circuito
-
-
-
-## Dettagli circuito
-Il circuito `age_proof.circom` implementa una Zero Knowledge Proof che permette di dimostrare, senza rivelare la data di nascita, che l’anno di nascita di un utente è inferiore o uguale a un anno richiesto (ad esempio, per verificare la maggiore età). Il circuito:
-- Riceve come input segreti l’anno di nascita e un salt (valore casuale per l’impegno crittografico).
-- Riceve come input pubblici l’anno richiesto e il commitment (hash registrato sullo smart contract).
-- Verifica che l’impegno calcolato dagli input segreti corrisponda al commitment pubblico.
-- Esegue la verifica che l’anno di nascita sia minore o uguale all’anno richiesto, producendo come output un valore booleano (1 se la condizione è soddisfatta, 0 altrimenti).
-Questo circuito è pensato per garantire privacy: il verificatore può sapere solo se la condizione è rispettata, senza conoscere l’anno di nascita reale.
-
-Il file `Circom/setup_circuit.js` automatizza tutte le operazioni necessarie per preparare un circuito Zero Knowledge Proof (ZKP) scritto in Circom. In particolare:
-
-- Compila il circuito Circom (`age_proof.circom`) generando i file necessari per la generazione e la verifica delle prove.
-- Esegue la cerimonia di trusted setup (Powers of Tau), fondamentale per la sicurezza dei protocolli zk-SNARK, producendo i file ptau.
-- Genera le chiavi di prova e verifica (`.zkey` e `verification_key.json`).
-- Crea il contratto Solidity `Verifier.sol` che permette la verifica delle prove zk-SNARK direttamente on-chain.
-
-Il trusted setup è una fase iniziale in cui vengono generati parametri crittografici necessari per la sicurezza del circuito zk-SNARK. Questa cerimonia, idealmente svolta da più partecipanti, garantisce che nessuno possa creare prove false. I file ptau prodotti sono la base di questa sicurezza.
 
 ## Demo video
 
-Guarda la demo della DApp: [Demo](https://drive.google.com/file/d/1Cchh-b0F9klvA0d4rVYVeVudlzM-0elj/view?usp=sharing)
+Guarda la demo della DApp: [Demo](https://drive.google.com/file/d/1fbEMucQG8LwpOzBQNLXdT8GobshvJllZ/view?usp=sharing)
 
 ### Cosa mostra la demo
 

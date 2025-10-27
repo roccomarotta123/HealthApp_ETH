@@ -36,9 +36,9 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
     event AccessGranted(uint256 indexed tokenId, address indexed grantee);
     event AccessRevoked(uint256 indexed tokenId, address indexed grantee);
     // Evento per comunicare l'esito della verifica ZKP
-    event AgeVerificationResult(address indexed doctor, address indexed user, uint256 requiredYear, uint256 result);
+    event AgeVerificationResult(address indexed doctor, address indexed user, uint256 requiredYear, uint256 requiredMonth, uint256 requiredDay, uint256 result);
      // Evento per richiesta verifica età da parte del medico
-    event AgeVerificationRequested(address indexed patient, address indexed doctor, uint256 requiredYear);
+    event AgeVerificationRequested(address indexed patient, address indexed doctor, uint256 requiredYear, uint256 requiredMonth, uint256 requiredDay);
 
     function initialize(address admin, address verifierAddress) public initializer {
         __ERC721_init("HealthRecord", "HREC");
@@ -48,6 +48,12 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(UPGRADER_ROLE, admin);
         verifier = Groth16Verifier(verifierAddress);
+
+        // Inizializzazione dei limiti di età consentiti
+        allowedAgeLimits.push(14);
+        allowedAgeLimits.push(16);
+        allowedAgeLimits.push(18);
+        allowedAgeLimits.push(21);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
@@ -117,10 +123,24 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
 
    
 
-    // Funzione per il medico per richiedere verifica età
-    function requestAgeVerification(address patient, uint256 requiredYear) external {
-        // Puoi aggiungere controlli (es. solo medico abilitato)
-        emit AgeVerificationRequested(patient, msg.sender, requiredYear);
+
+    // Limiti di età consentiti (anni)
+    uint256[] public allowedAgeLimits;
+
+    // Funzione di utilità per controllare se un limite è consentito
+    function isAllowedAgeLimit(uint256 age) public view returns (bool) {
+        for (uint256 i = 0; i < allowedAgeLimits.length; i++) {
+            if (allowedAgeLimits[i] == age) return true;
+        }
+        return false;
+    }
+
+
+
+    // Se serve, puoi lasciare solo l'evento per la data limite, senza salvare stato
+    function requestAgeVerification(address patient, address doctor, uint256 ageLimit, uint256 year, uint256 month, uint256 day) external onlyRole(ORACLE_ROLE) {
+        require(isAllowedAgeLimit(ageLimit), unicode"Limite di età non consentito");
+        emit AgeVerificationRequested(patient, doctor, year, month, day);
     }
 
     // Funzione di verifica proof ZKP: comunica solo l'esito, non concede/revoca accesso
@@ -130,12 +150,14 @@ contract HealthRecordNFT is Initializable, ERC721Upgradeable, AccessControlUpgra
     uint256[2] calldata c,
     uint256[1] calldata publicInputs,
     address doctor,
-    uint256 requiredYear
+    uint256 requiredYear,
+    uint256 requiredMonth,
+    uint256 requiredDay
     ) external {
         // Verifica la proof tramite il Verifier
         bool valid = verifier.verifyProof(a, b, c, publicInputs);
         require(valid, "Invalid proof or public inputs");
         // Se valida, emetti l'evento con l'esito numerico e l'anno richiesto
-        emit AgeVerificationResult(doctor, msg.sender, requiredYear, publicInputs[0]);
+        emit AgeVerificationResult(doctor, msg.sender, requiredYear, requiredMonth, requiredDay, publicInputs[0]);
     }
 }
